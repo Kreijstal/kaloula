@@ -14,12 +14,14 @@
 [ext_resource type="Script" uid="uid://b2va03a6lqkjd" path="res://scripts/game_audio.gd" id="11_audio"]
 [ext_resource type="AudioStream" uid="uid://cuea3nqok6uc4" path="res://assets/audio/frog_paints.mp3" id="12_paint"]
 [ext_resource type="AudioStream" uid="uid://05emixnaf2r0" path="res://assets/audio/frog_gets_painted_by_other_frog.mp3" id="13_stomp"]
+[ext_resource type="PackedScene" path="res://scenes/game_over/game_over.tscn" id="14_over"]
 
-[node name="Game" type="Node2D" unique_id=787533974 node_paths=PackedStringArray("logic", "score", "hud")]
+[node name="Game" type="Node2D" unique_id=787533974 node_paths=PackedStringArray("logic", "score", "hud", "game_over")]
 script = ExtResource("5_game")
 logic = NodePath("Logic/Game")
 score = NodePath("Logic/Score")
 hud = NodePath("HUD")
+game_over = NodePath("GameOver")
 music = ExtResource("2_trtic")
 
 [node name="World" type="Node2D" parent="." unique_id=413104128]
@@ -89,3 +91,5 @@ script = ExtResource("11_audio")
 logic = NodePath("../Logic/Game")
 paint_sound = ExtResource("12_paint")
 stomped_sound = ExtResource("13_stomp")
+
+[node name="GameOver" parent="." instance=ExtResource("14_over")]
