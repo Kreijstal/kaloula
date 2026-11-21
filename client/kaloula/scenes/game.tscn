@@ -74,7 +74,7 @@ pool_scene = ExtResource("6_pool")
 round_timer = NodePath("RoundTimer")
 
 [node name="RoundTimer" type="Timer" parent="Logic/Game" unique_id=2066483119]
-wait_time = 90.0
+wait_time = 45.0
 one_shot = true
 
 [node name="Score" type="Node" parent="Logic" unique_id=1452523307 node_paths=PackedStringArray("map")]
