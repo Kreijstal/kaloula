@@ -38,6 +38,7 @@ var can_move := true
 
 var _time_since_last_jump = 0;
 var _hopping := false
+var _crawling := false
 var _hop_start := Vector2.ZERO
 var _hop_cell := Vector2i.ZERO
 
@@ -56,6 +57,9 @@ func _ready() -> void:
 	_apply_color()
 	rig.jump_duration = jump_duration
 	rig.cycle_finished.connect(_on_rig_cycle_finished)
+	rig.crawl_finished.connect(func() -> void:
+		if _crawling:
+			_land())
 
 
 func _apply_color() -> void:
@@ -68,7 +72,10 @@ func _apply_color() -> void:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	if _hopping:
+	if _crawling:
+		var travel := minf(rig.get_travel(), rig.hop_stride)
+		global_position = _hop_start + Vector2.UP.rotated(global_rotation) * travel * rig.global_scale.y
+	elif _hopping:
 		global_position = _hop_start + Vector2.UP.rotated(global_rotation) * rig.get_travel() * rig.global_scale.y
 	var cell := get_jump_cell_map_coords()
 	var is_visible := not _hopping and map.get_cell_source_id(cell) != -1
@@ -96,7 +103,13 @@ func jump() -> bool:
 	
 	global_rotation = Vector2.UP.angle_to(to_target)
 	rig.hop_stride = to_target.length() / rig.global_scale.y
-	rig.play_once(FrogRig.Anim.HOP)
+	var here := map.local_to_map(map.to_local(global_position))
+	_crawling = maxi(absi(target_cell.x - here.x), absi(target_cell.y - here.y)) == 1
+	if _crawling:
+		# a neighbouring tile: crawl there instead, taking as long as the hop would
+		rig.crawl_over(rig.hop_stride, rig.hop_duration())
+	else:
+		rig.play_once(FrogRig.Anim.HOP)
 	_hop_start = global_position
 	_hop_cell = target_cell
 	_hopping = true
@@ -110,9 +123,16 @@ func is_hopping() -> bool:
 
 
 func _on_rig_cycle_finished(animation: FrogRig.Anim) -> void:
-	if animation != FrogRig.Anim.HOP or not _hopping:
+	if animation != FrogRig.Anim.HOP or not _hopping or _crawling:
 		return
+	_land()
+
+
+func _land() -> void:
+	if _crawling:
+		rig.animation = FrogRig.Anim.IDLE
 	_hopping = false
+	_crawling = false
 	global_position = map.to_global(map.map_to_local(_hop_cell))
 	jumped.emit(_hop_cell)
 
@@ -123,6 +143,7 @@ func lose() -> void:
 	can_move = false
 	if _hopping:
 		_hopping = false
+		_crawling = false
 		global_position = map.to_global(map.map_to_local(_hop_cell))
 	rig.animation = FrogRig.Anim.BELLY_UP
 
