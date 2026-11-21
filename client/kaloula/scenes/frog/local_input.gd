@@ -2,7 +2,7 @@ class_name LocalInput
 extends Node
 
 @export var frog: Frog
-@export var jump_distance_rate: float = 32
+@export var jump_distance_rate: float = 200
 ## Prepended to every action name, so one script serves several players ("" for player 1, "p2_" for player 2).
 @export var action_prefix: String = ""
 

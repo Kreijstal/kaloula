@@ -79,7 +79,7 @@ func _process(delta: float) -> void:
 	elif _hopping:
 		global_position = _hop_start + Vector2.UP.rotated(global_rotation) * rig.get_travel() * rig.global_scale.y
 	var cell := get_jump_cell_map_coords()
-	var is_visible := not _hopping and map.get_cell_source_id(cell) != -1
+	var is_visible := not _hopping and map.get_cell_source_id(cell) != -1 and cell != map.local_to_map(map.to_local(global_position))
 	jump_highlight.visible = is_visible
 	if is_visible:
 		jump_highlight.global_position = map.to_global(map.map_to_local(cell))
@@ -88,9 +88,18 @@ func _process(delta: float) -> void:
 	_time_since_last_jump += delta;
 
 
+## The cell `jump_distance` ahead, or the farthest map cell short of it if that lies off the map.
 func get_jump_cell_map_coords() -> Vector2i:
-	var target := global_position + Vector2.UP.rotated(global_rotation) * jump_distance
-	return map.local_to_map(map.to_local(target))
+	var from := map.to_local(global_position)
+	var to := map.to_local(global_position + Vector2.UP.rotated(global_rotation) * jump_distance)
+	# Walk back from the target in quarter-tile steps, so no cell along the line is skipped.
+	var step := minf(map.tile_set.tile_size.x, map.tile_set.tile_size.y) * 0.25
+	var steps := maxi(1, ceili(from.distance_to(to) / step))
+	for i in range(steps, -1, -1):
+		var cell := map.local_to_map(from.lerp(to, float(i) / steps))
+		if map.get_cell_source_id(cell) != -1:
+			return cell
+	return map.local_to_map(from)
 
 func jump() -> bool:
 	if not can_move or _hopping or _time_since_last_jump < jump_cooldown:

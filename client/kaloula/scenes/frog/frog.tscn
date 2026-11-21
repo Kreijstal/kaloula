@@ -8,9 +8,8 @@
 [sub_resource type="Resource" id="Resource_u5sy4"]
 script = ExtResource("3_iplly")
 
-[node name="Frog" type="CharacterBody2D" unique_id=264248472 node_paths=PackedStringArray("map")]
+[node name="Frog" type="CharacterBody2D" unique_id=264248472]
 script = ExtResource("1_qi8j7")
-map = NodePath("")
 
 [node name="JumpHighlight" type="Polygon2D" parent="." unique_id=1462093817]
 color = Color(1, 1, 1, 0.45)
@@ -27,7 +26,7 @@ polygon = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
 
 [node name="HopSound" type="AudioStreamPlayer2D" parent="." unique_id=1316601277]
 stream = ExtResource("4_hop")
-attenuation = 0.0
 max_distance = 100000.0
+attenuation = 0.0
 max_polyphony = 2
 bus = &"SFX"
