@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Export the Web preset
+        id: export
         # Third-party action, pinned to the v8.0.0 commit.
         uses: firebelley/godot-export@615a6f7afc22d6266bf55c17748fb07447e8bdab # v8.0.0
         with:
@@ -27,14 +28,15 @@ jobs:
           godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_export_templates.tpz
           relative_project_path: client/kaloula
           presets_to_export: Web
-          use_preset_export_path: true
           cache: true
 
       - uses: actions/configure-pages@v6
 
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: client/kaloula/build/web
+          # The action exports each preset into a folder named after it; publish that folder's contents
+          # so index.html sits at the site root.
+          path: ${{ steps.export.outputs.build_directory }}/Web
 
   deploy:
     needs: export

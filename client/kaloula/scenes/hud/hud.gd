@@ -12,6 +12,8 @@ extends CanvasLayer
 @export var paint_max := 3
 ## Seconds left at which the timer turns red and pulses.
 @export var warning_seconds := 10
+## Key help shown in the middle of the dock, between the player cards.
+@export_multiline var controls_hint := "Player 1: Use W/A/S/D to change direction and jump distance, Space to jump\nPlayer 2: Use the arrow keys to change direction and jump distance, Enter to jump"
 
 const FONT_REGULAR := preload("res://assets/fonts/pixelify-sans-latin-400-normal.woff2")
 const FONT_SEMIBOLD := preload("res://assets/fonts/pixelify-sans-latin-600-normal.woff2")
@@ -230,6 +232,16 @@ func _build() -> void:
 	_unpainted_label.offset_top = -72
 	_unpainted_label.offset_bottom = -50
 	_root.add_child(_unpainted_label)
+
+	var controls := _label(FONT_REGULAR, 14, TEXT_DIM)
+	controls.text = controls_hint
+	controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	controls.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	controls.offset_left = -330
+	controls.offset_right = 330
+	controls.offset_top = -124
+	controls.offset_bottom = -78
+	_root.add_child(controls)
 
 	# tug-of-war bar along the top
 	_bar = TugBar.new()

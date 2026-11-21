@@ -34,6 +34,7 @@ hud.set_player_name(player_id, "Lily")              # optional, default "Player 
 - Calling `update_points` / `set_timer` every frame is fine; the bar and paint level ease to
   new values.
 - `paint_max` (3) is how much paint fills a can; more than that shows "lots of paint".
+- `controls_hint` is the key help shown in the middle of the dock; edit it in the inspector.
 
 ## Files
 
