@@ -50,6 +50,12 @@ enum Anim { HOP, CRAWL, BELLY_UP, IDLE, TURN, STRETCH, CATCH }
 @export var fidget_after := Vector2(5.0, 10.0)
 ## Animate in the editor too (handy while picking colours).
 @export var preview_in_editor := true
+## Draw another rig's current pose and colours instead of animating this one (for
+## HUD portraits and the like). The copy stays in place: no travel, no rotation.
+@export var mirror_of: FrogRig:
+	set(v):
+		mirror_of = v
+		queue_redraw()
 @export var palette: FrogPalette:
 	set(v):
 		if palette and palette.changed.is_connected(queue_redraw):
@@ -225,6 +231,11 @@ func _restart(from: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
+	if is_instance_valid(mirror_of):
+		if palette != mirror_of.palette:
+			palette = mirror_of.palette
+		queue_redraw()
+		return
 	if Engine.is_editor_hint() and not preview_in_editor:
 		return
 	if not playing:
@@ -345,13 +356,15 @@ func _draw() -> void:
 	if palette == null:
 		return
 	_base = Transform2D.IDENTITY
-	var p := _display_pose()
+	var mirroring := is_instance_valid(mirror_of)
+	var p := mirror_of._display_pose() if mirroring else _display_pose()
+	var anim := mirror_of.animation if mirroring else animation
 	var yaw: float = p.get("yaw", 0.0)
 	if show_shadow and p.has("shadow"):
 		var sh: Dictionary = p.shadow
 		_set_xf(Transform2D.IDENTITY)
 		_ellipse(sh.center, sh.rx, sh.ry, _shadow_color(sh.opacity), sh.angle)
-	if animation == Anim.BELLY_UP:
+	if anim == Anim.BELLY_UP:
 		_draw_back(p)
 	else:
 		# the snout covers the tongue and the mosquito, so draw them first
