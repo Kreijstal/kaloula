@@ -1,3 +1,4 @@
+@tool
 class_name PaintCan
 extends Control
 ## A round paint can seen from above. The paint inside drains as `level` goes from
