@@ -1,0 +1,174 @@
+[gd_scene format=3 uid="uid://4govwlyy7jml"]
+
+[ext_resource type="Script" uid="uid://caykoq1c050gy" path="res://scenes/game_over/game_over.gd" id="1_over"]
+[ext_resource type="Script" uid="uid://btfqbmskcgcfq" path="res://scenes/hud/pixel_style_box.gd" id="2_box"]
+[ext_resource type="FontFile" uid="uid://cay135t88t3wk" path="res://assets/fonts/pixelify-sans-latin-600-normal.woff2" id="3_semibold"]
+[ext_resource type="FontFile" uid="uid://7wwlmovjlkc5" path="res://assets/fonts/pixelify-sans-latin-700-normal.woff2" id="4_bold"]
+
+[sub_resource type="StyleBox" id="StyleBox_panel"]
+resource_local_to_scene = false
+resource_name = ""
+content_margin_left = 32.0
+content_margin_top = 32.0
+content_margin_right = 32.0
+content_margin_bottom = 32.0
+script = ExtResource("2_box")
+shadow_offset = Vector2(8, 8)
+
+[sub_resource type="StyleBox" id="StyleBox_normal"]
+resource_local_to_scene = false
+resource_name = ""
+content_margin_left = 22.0
+content_margin_top = 0.0
+content_margin_right = 22.0
+content_margin_bottom = 0.0
+script = ExtResource("2_box")
+fill = Color(0.380392, 0.607843, 0.192157, 1)
+inner = Color(0.473333, 0.666667, 0.313333, 1)
+shadow = Color(0, 0, 0, 0.35)
+shadow_offset = Vector2(6, 6)
+
+[sub_resource type="StyleBox" id="StyleBox_pressed"]
+resource_local_to_scene = false
+resource_name = ""
+content_margin_left = 22.0
+content_margin_top = 0.0
+content_margin_right = 22.0
+content_margin_bottom = 0.0
+script = ExtResource("2_box")
+fill = Color(0.342353, 0.547059, 0.172941, 1)
+inner = Color(0.473333, 0.666667, 0.313333, 1)
+shadow = Color(0, 0, 0, 0.35)
+shadow_offset = Vector2(2, 2)
+
+[sub_resource type="StyleBox" id="StyleBox_hover"]
+resource_local_to_scene = false
+resource_name = ""
+content_margin_left = 22.0
+content_margin_top = 0.0
+content_margin_right = 22.0
+content_margin_bottom = 0.0
+script = ExtResource("2_box")
+fill = Color(0.454745, 0.654902, 0.289098, 1)
+inner = Color(0.536533, 0.706667, 0.395733, 1)
+shadow = Color(0, 0, 0, 0.35)
+shadow_offset = Vector2(6, 6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_focus"]
+draw_center = false
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.94902, 0.756863, 0.305882, 1)
+expand_margin_left = 5.0
+expand_margin_top = 5.0
+expand_margin_right = 5.0
+expand_margin_bottom = 5.0
+
+[node name="GameOver" type="CanvasLayer" unique_id=514579057]
+layer = 20
+script = ExtResource("1_over")
+
+[node name="Dim" type="ColorRect" parent="." unique_id=1075081311]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="Center" type="CenterContainer" parent="." unique_id=942622908]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center" unique_id=1658674006]
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBox_panel")
+
+[node name="Box" type="VBoxContainer" parent="Center/Panel" unique_id=1048647133]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="TimesUp" type="Label" parent="Center/Panel/Box" unique_id=1239103875]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.788235, 0.768627, 0.678431, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 18
+text = "TIME'S UP"
+
+[node name="Title" type="Label" parent="Center/Panel/Box" unique_id=1050902690]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.952941, 0.937255, 0.85098, 1)
+theme_override_colors/font_shadow_color = Color(0.043137, 0.058824, 0.054902, 1)
+theme_override_constants/shadow_offset_x = 4
+theme_override_constants/shadow_offset_y = 4
+theme_override_fonts/font = ExtResource("4_bold")
+theme_override_font_sizes/font_size = 48
+text = "PLAYER 1 WINS!"
+
+[node name="Rows" type="VBoxContainer" parent="Center/Panel/Box" unique_id=2091227326]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Player1" type="HBoxContainer" parent="Center/Panel/Box/Rows" unique_id=1794794020]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Name" type="Label" parent="Center/Panel/Box/Rows/Player1" unique_id=1808256488]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.952941, 0.937255, 0.85098, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 26
+text = "Player 1"
+
+[node name="Points" type="Label" parent="Center/Panel/Box/Rows/Player1" unique_id=2013605705]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.952941, 0.937255, 0.85098, 1)
+theme_override_fonts/font = ExtResource("4_bold")
+theme_override_font_sizes/font_size = 26
+text = "0 points"
+
+[node name="Player2" type="HBoxContainer" parent="Center/Panel/Box/Rows" unique_id=1402990396]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Name" type="Label" parent="Center/Panel/Box/Rows/Player2" unique_id=347926572]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.952941, 0.937255, 0.85098, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 26
+text = "Player 2"
+
+[node name="Points" type="Label" parent="Center/Panel/Box/Rows/Player2" unique_id=1950583627]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.952941, 0.937255, 0.85098, 1)
+theme_override_fonts/font = ExtResource("4_bold")
+theme_override_font_sizes/font_size = 26
+text = "0 points"
+
+[node name="PlayAgain" type="Button" parent="Center/Panel/Box" unique_id=1772111682]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("4_bold")
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("StyleBox_normal")
+theme_override_styles/pressed = SubResource("StyleBox_pressed")
+theme_override_styles/hover = SubResource("StyleBox_hover")
+theme_override_styles/hover_pressed = SubResource("StyleBox_pressed")
+theme_override_styles/focus = SubResource("StyleBoxFlat_focus")
+text = "PLAY AGAIN"

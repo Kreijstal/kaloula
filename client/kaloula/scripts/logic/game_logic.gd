@@ -2,9 +2,8 @@ class_name GameLogic
 extends Node
 ## The match rules: paint budgets, paint pools, stomps and the round timer.
 
-## Emitted when the time runs out. `winners`: the player ids with the most tiles in
-## their team colour; `losers`: everyone else (empty on a tie).
-signal round_over(winners: Array[int], losers: Array[int])
+## The round's time ran out; the frogs can no longer move.
+signal round_over
 ## Emitted whenever the whole seconds left in the round change, ending with 0.
 signal ticked(seconds_left: int)
 signal stomped(victim_id: int, by_id: int)
@@ -15,8 +14,7 @@ signal stomped(victim_id: int, by_id: int)
 ## Each player's paint pool cell; the pool takes that frog's starting colour.
 @export var pool_cells: Dictionary[int, Vector2i] = {}
 @export var pool_scene: PackedScene
-## One-shot Timer for the round; its wait_time is the round length. When it runs out the
-## losers flip onto their backs. Leave unset for no time limit.
+## One-shot Timer for the round; its wait_time is the round length. Leave unset for no time limit.
 @export var round_timer: Timer
 
 ## Seconds left in the round (0 without a time limit).
@@ -115,21 +113,9 @@ func is_round_over() -> bool:
 func _end_round() -> void:
 	_round_over = true
 	ticked.emit(0)
-	var best := -1
-	for player_id in frogs:
-		best = maxi(best, get_tiles(player_id))
-	var winners: Array[int] = []
-	var losers: Array[int] = []
-	for player_id in frogs:
-		if get_tiles(player_id) == best:
-			winners.append(player_id)
-		else:
-			losers.append(player_id)
 	for player_id in frogs:
 		frogs[player_id].can_move = false
-	for player_id in losers:
-		frogs[player_id].lose()
-	round_over.emit(winners, losers)
+	round_over.emit()
 
 
 func get_starting_colors() -> Dictionary[int, Color]:
