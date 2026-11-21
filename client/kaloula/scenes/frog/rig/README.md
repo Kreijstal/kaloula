@@ -4,6 +4,31 @@
 The frog faces up (−Y), like the `Frog` node. One hop is `hop_stride` rig units (150 by default);
 in `game.tscn` the rig is scaled to 32/150 so a default hop covers one 32 px tile.
 
+## Easy API
+Call these on the rig (`$Rig` inside the Frog). Moves act on the rig's parent (the Frog), keep the
+planted feet still, and can be awaited.
+
+```gdscript
+rig.idle()                        # sit, breathe, blink
+rig.lose()                        # flip onto its back and struggle (until another action)
+rig.stretch()                     # toe stretch once, then sit   -> action_finished
+rig.catch_fly()                   # catch a mosquito once, then sit -> action_finished
+await rig.face(target)            # turn on the spot (feet stepping) to face a global position
+await rig.hop_to(target)          # face, hop onto `target` (any distance), sit -> move_finished
+await rig.hop_to(target, 0.5)     #   ... with the hop itself lasting 0.5 s
+await rig.crawl_to(target)        # face, crawl there, sit
+rig.hop() / rig.crawl()           # loop on the spot (move the frog yourself with travel_delta)
+rig.is_moving()                   # true during face / hop_to / crawl_to
+```
+Starting any action cancels the one in progress (an awaited move then returns early).
+
+Example `Frog.jump()` with the animation instead of teleporting:
+```gdscript
+var target_coords := map.to_global(map.map_to_local(target_cell))
+await rig.hop_to(target_coords, jump_cooldown, 0.0)   # 0.0 = no turn, it already faces the cell
+map.paint_cell(target_cell, color)
+```
+
 ## Animations (`rig.animation`)
 | Anim | Loop | Notes |
 |---|---|---|

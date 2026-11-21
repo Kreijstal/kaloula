@@ -7,6 +7,10 @@ extends Node2D
 ## rotate the node to point it somewhere else. Colours live in a FrogPalette.
 
 signal cycle_finished(animation: Anim)
+## Emitted when hop_to() lands, crawl_to() arrives or face() is done.
+signal move_finished
+## Emitted when a one-shot action (stretch(), catch_fly()) is done and the frog sits again.
+signal action_finished(animation: Anim)
 ## Emitted when a turn started with turn() is done (the node has been rotated).
 signal turn_finished(degrees: float)
 
@@ -22,6 +26,9 @@ enum Anim { HOP, CRAWL, BELLY_UP, IDLE, TURN, STRETCH, CATCH }
 		animation = v
 		_turn_once = false
 		_fidgeting = false
+		_once = false
+		if not _keep_move:
+			_cancel_move()
 		_restart(from)
 ## Used by the TURN animation: 90 = quarter turn right, -90 = left, 180 = turn around.
 ## In a game call turn(degrees) instead; that also rotates the node when it's done.
@@ -79,6 +86,16 @@ var _step_t := PackedFloat64Array([-1.0, -1.0, -1.0, -1.0])
 var _turn_dir := 0.0
 var _since_turn := 10.0
 var _fidgeting := false
+var _once := false
+var _keep_move := false
+var _action_id := 0
+enum _Move { NONE, HOP, CRAWL }
+var _move := _Move.NONE
+var _move_body: Node2D
+var _move_from := Vector2.ZERO
+var _move_to := Vector2.ZERO
+var _move_speed := 1.0
+var _move_len := 1.0  # rig units
 var _still := 0.0
 var _next_fidget := -1.0
 
@@ -91,6 +108,169 @@ const CATCH_DURATION := 4.8
 func _init() -> void:
 	if palette == null:
 		palette = FrogPalette.new()
+
+
+# =============================================================================
+# EASY API
+# Call these from game code. Moves act on `body` (default: this rig's parent),
+# so planted feet stay put. The move functions can be awaited:
+#     await $Frog/Rig.hop_to(target_global_position)
+# Starting any action (or setting `animation`) cancels a move in progress.
+# =============================================================================
+
+## Sit, breathe and blink.
+func idle() -> void:
+	animation = Anim.IDLE
+
+
+## Flip onto its back and struggle (loops until another action). Use for losing.
+func lose() -> void:
+	animation = Anim.BELLY_UP
+
+
+## Stretch the toes once, then sit. Emits action_finished.
+func stretch() -> void:
+	_play_once(Anim.STRETCH)
+
+
+## Catch a mosquito with the tongue once, then sit. Emits action_finished.
+func catch_fly() -> void:
+	_play_once(Anim.CATCH)
+
+
+## Keep hopping forward on the spot (in_place). Move the frog yourself by
+## `travel_delta` (rig units) if you want it to travel; see hop_to() for one hop.
+func hop() -> void:
+	animation = Anim.HOP
+
+
+## Keep crawling forward on the spot (in_place), like hop().
+func crawl() -> void:
+	animation = Anim.CRAWL
+
+
+## True while hop_to(), crawl_to() or face() is moving the frog.
+func is_moving() -> bool:
+	return _move != _Move.NONE or _facing
+
+
+## Turn `body` on the spot (feet stepping) until it faces `target` (global position).
+## `speed` in radians per second.
+func face(target: Vector2, speed: float = 4.0) -> void:
+	var id := _begin_action()
+	var body := _body()
+	if body == null:
+		return
+	if animation != Anim.IDLE:
+		idle()
+	_facing = true
+	while id == _action_id:
+		var want := (target - body.global_position).angle() + PI / 2.0
+		var diff := angle_difference(global_rotation, want)
+		var step := clampf(diff, -speed * get_process_delta_time(), speed * get_process_delta_time())
+		body.global_rotation += step
+		turn_by(step)
+		if absf(diff - step) < 0.0001:
+			break
+		await get_tree().process_frame
+	if id == _action_id:
+		_facing = false
+		move_finished.emit()
+
+
+## Turn to face `target` (global position), then hop onto it and sit.
+## Works for any distance (the hop stretches or shortens). `duration`: seconds for
+## the hop itself (default 1.12); `turn_speed`: radians per second for the turn
+## (0 = snap to face the target at once).
+func hop_to(target: Vector2, duration: float = HOP_DURATION, turn_speed: float = 4.0) -> void:
+	await _move_to_target(_Move.HOP, target, HOP_DURATION / maxf(duration, 0.05), turn_speed)
+
+
+## Turn to face `target`, then crawl to it and sit. `speed`: crawl speed multiplier
+## (1 = the slow natural crawl, about 22 rig units per second).
+func crawl_to(target: Vector2, speed: float = 2.5, turn_speed: float = 4.0) -> void:
+	await _move_to_target(_Move.CRAWL, target, speed, turn_speed)
+
+
+var _facing := false
+
+
+func _body() -> Node2D:
+	return get_parent() as Node2D
+
+
+func _begin_action() -> int:
+	_action_id += 1
+	_cancel_move()
+	_facing = false
+	return _action_id
+
+
+func _play_once(anim: Anim) -> void:
+	_begin_action()
+	animation = anim
+	_once = true
+
+
+func _move_to_target(kind: int, target: Vector2, speed: float, turn_speed: float) -> void:
+	var body := _body()
+	if body == null:
+		return
+	if turn_speed > 0.0:
+		await face(target, turn_speed)
+	var id := _begin_action()
+	var want := (target - body.global_position).angle() + PI / 2.0
+	var diff := angle_difference(global_rotation, want)
+	if absf(diff) > 0.0001:
+		body.global_rotation += diff
+		turn_by(diff)
+	_move_body = body
+	_move_from = body.global_position
+	_move_to = target
+	_move_speed = speed
+	var length := _move_from.distance_to(_move_to) / maxf(global_scale.y, 0.0001)
+	_keep_move = true
+	_move_len = maxf(length, 1.0)
+	if kind == _Move.HOP:
+		hop_stride = _move_len
+		animation = Anim.HOP
+	else:
+		animation = Anim.CRAWL
+	_keep_move = false
+	_move = kind
+	if length < 0.5:
+		_finish_move()
+		return
+	await move_finished
+	if id != _action_id:
+		return
+
+
+func _update_move() -> void:
+	if _move == _Move.NONE or not is_instance_valid(_move_body):
+		return
+	var t := get_travel() / _move_len
+	if _move == _Move.CRAWL and t >= 1.0:
+		_finish_move()
+		return
+	_move_body.global_position = _move_from + (_move_to - _move_from) * minf(t, 1.0)
+
+
+func _finish_move() -> void:
+	if is_instance_valid(_move_body):
+		_move_body.global_position = _move_to
+	_move = _Move.NONE
+	_move_speed = 1.0
+	animation = Anim.IDLE
+	move_finished.emit()
+
+
+func _cancel_move() -> void:
+	var was_moving := _move != _Move.NONE
+	_move = _Move.NONE
+	_move_speed = 1.0
+	if was_moving:
+		move_finished.emit()  # let anyone awaiting the cancelled move carry on
 
 
 ## Turn in place by `degrees` (positive = right, negative = left, 180 = around),
@@ -220,12 +400,13 @@ func _process(delta: float) -> void:
 			_blend_left = maxf(0.0, _blend_left - delta)
 			queue_redraw()
 		return
-	var step := delta * speed_scale
+	var step := delta * speed_scale * _move_speed
 	time += step
 	_blend_left = maxf(0.0, _blend_left - step)
 	if animation == Anim.IDLE and not feet_settled():
 		_update_steps(step)
 	_update_fidget(step)
+	_update_move()
 	if is_turning() and time >= duration():
 		_finish_turn()
 		return
@@ -233,9 +414,14 @@ func _process(delta: float) -> void:
 	if cycle != _last_cycle:
 		_last_cycle = cycle
 		var finished := animation
-		if _fidgeting and (finished == Anim.STRETCH or finished == Anim.CATCH):
-			animation = Anim.IDLE  # fidgets play once (the setter clears _fidgeting)
+		var was_once := _once
+		if finished == Anim.HOP and _move == _Move.HOP:
+			_finish_move()
+		elif (_fidgeting or _once) and (finished == Anim.STRETCH or finished == Anim.CATCH):
+			animation = Anim.IDLE  # fidgets and one-shots play once
 		cycle_finished.emit(finished)
+		if was_once:
+			action_finished.emit(finished)
 	var travel := get_travel()
 	travel_delta = travel - _last_travel
 	_last_travel = travel
