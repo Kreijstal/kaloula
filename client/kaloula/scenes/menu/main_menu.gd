@@ -17,7 +17,7 @@ const FROG_ART := preload("res://assets/ui/frog_title.png")
 const TEXT := Color("f3efd9")
 const TEXT_DIM := Color("c9c4ad")
 const BLUE := Color("2a47f5")
-const GREEN := Color("619b31")
+const RED := Color("d6332b")
 const POND := Color("3d6b6c")
 const POND_LINE := Color("36605f")
 const FOCUS := Color("f2c14e")
@@ -135,9 +135,9 @@ func _build_main() -> void:
 	art.size = Vector2(500, 480)
 	art.draw.connect(func() -> void:
 		_blob(art, Vector2(210, 200), Vector2(190, 190), BLUE, 1.0)
-		_blob(art, Vector2(320, 325), Vector2(160, 150), GREEN, 2.0)
+		_blob(art, Vector2(320, 325), Vector2(160, 150), RED, 2.0)
 		art.draw_circle(Vector2(410, 110), 20, BLUE)
-		art.draw_circle(Vector2(53, 423), 13, GREEN))
+		art.draw_circle(Vector2(53, 423), 13, RED))
 	_main.add_child(art)
 	var frog := TextureRect.new()
 	frog.texture = FROG_ART
@@ -159,7 +159,7 @@ func _build_main() -> void:
 	_main.add_child(title)
 	for i in 2:
 		var stripe := ColorRect.new()
-		stripe.color = [BLUE, GREEN][i]
+		stripe.color = [BLUE, RED][i]
 		stripe.position = Vector2(86 + i * 56, 182)
 		stripe.size = Vector2(46, 14)
 		stripe.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -225,7 +225,7 @@ func _build_settings() -> void:
 				GameSettings.set_sound(v)
 				_sound_value.text = "%d%%" % roundi(v * 100.0),
 			func() -> void: _sfx_player.play())
-	_music_value = _volume_row(box, "Music", Color("b6e08c"), GREEN, GameSettings.music,
+	_music_value = _volume_row(box, "Music", Color("f2a29c"), RED, GameSettings.music,
 			func(v: float) -> void:
 				GameSettings.set_music(v)
 				_music_value.text = "%d%%" % roundi(v * 100.0),
