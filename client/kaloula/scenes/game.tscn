@@ -28,7 +28,8 @@ jump_duration = 0.5
 
 [node name="Frog2" parent="World" unique_id=673154137 node_paths=PackedStringArray("map") instance=ExtResource("3_lbhrr")]
 position = Vector2(272, 48)
-color = Color(0.38051757, 0.6086238, 0.19310415, 1)
+color = Color(0.84, 0.2, 0.17, 1)
+base_color = Color(0.29, 0.5, 0.18, 1)
 map = NodePath("../TileMapLayer")
 jump_duration = 0.5
 

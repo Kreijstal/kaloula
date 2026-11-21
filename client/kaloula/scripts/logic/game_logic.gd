@@ -22,7 +22,7 @@ func _ready() -> void:
 	for player_id in frogs:
 		var frog := frogs[player_id]
 		assert(frog != null, "GameLogic's frogs export has no frog for player %d" % player_id)
-		_paint_budgets[player_id] = paint_budget
+		_set_paint(player_id, paint_budget)
 		frog.jumped.connect(_on_frog_jumped.bind(player_id))
 		_place_pool(player_id, pool_cells[player_id], frog.color)
 		_player_colors[player_id] = frog.color
@@ -47,14 +47,25 @@ func _on_frog_jumped(cell: Vector2i, player_id: int) -> void:
 	for other_id in get_players_on(cell):
 		if other_id != player_id:
 			frogs[other_id].color = frogs[player_id].color
-			_paint_budgets[other_id] = 10_000
+			_set_paint(other_id, 10_000)
 	var pool: PaintPool = _pool_cells.get(cell)
 	if pool != null:
-		_paint_budgets[player_id] = paint_budget
+		_set_paint(player_id, paint_budget)
 		frogs[player_id].color = pool.color
 		return
 	if _paint_budgets[player_id] > 0 and map.paint_cell(cell, frogs[player_id].color):
-		_paint_budgets[player_id] -= 1
+		_set_paint(player_id, _paint_budgets[player_id] - 1)
+
+
+## Every paint budget change goes through here so the frog knows how much paint
+## it has (it turns back to its base green at 0).
+func _set_paint(player_id: int, amount: int) -> void:
+	_paint_budgets[player_id] = amount
+	frogs[player_id].paint_left = amount
+
+
+func get_paint_left(player_id: int) -> int:
+	return _paint_budgets.get(player_id, 0)
 
 
 func get_players_on(cell: Vector2i) -> Array[int]:

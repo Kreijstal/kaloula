@@ -2,9 +2,17 @@ extends CharacterBody2D
 class_name Frog
 
 @export var jump_distance: float = 40;
+## The paint colour the frog carries (it paints tiles with it). The colour it
+## starts with is its team colour: its toes keep that colour for the whole game.
 @export var color: Color = Color.BLUE:
 	set(value):
 		color = value
+		if is_node_ready():
+			_apply_color()
+## Body colour when the frog has no paint left.
+@export var base_color: Color = Color("6aab3f"):
+	set(value):
+		base_color = value
 		if is_node_ready():
 			_apply_color()
 @export var rotation_speed: float = 6.0;
@@ -14,6 +22,16 @@ class_name Frog
 
 @onready var rig: FrogRig = $Rig;
 @onready var jump_highlight: Polygon2D = $JumpHighlight
+
+## Paint the frog has left (the game logic keeps this up to date). At 0 the
+## frog's body turns back to `base_color`.
+var paint_left: int = 1:
+	set(value):
+		paint_left = value
+		if is_node_ready():
+			_apply_color()
+## The frog's team colour (its starting `color`); used for its toes.
+var team_color: Color
 
 var _time_since_last_jump = 0;
 var _hopping := false
@@ -30,6 +48,7 @@ enum Direction {
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	assert(map != null, "Frog needs its map export set")
+	team_color = color
 	jump_highlight.modulate = color
 	_apply_color()
 	rig.jump_duration = jump_duration
@@ -37,7 +56,11 @@ func _ready() -> void:
 
 
 func _apply_color() -> void:
-	rig.palette = FrogPalette.from_color(color)
+	var palette := FrogPalette.from_color(color if paint_left > 0 else base_color)
+	palette.toes = team_color
+	palette.toe_pads = team_color
+	palette.derive_belly_colors()  # belly-up toe tips follow the toes too
+	rig.palette = palette
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
