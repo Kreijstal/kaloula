@@ -11,7 +11,6 @@ signal shape_completed(player_id: int, points: int)
 	PackedVector2Array([Vector2(0, 0), Vector2(0, 1), Vector2(0, 2), Vector2(1, 2), Vector2(2, 2)]): {probability = 0.25, points = 14},
 }
 
-var _player_cells: Dictionary[Vector2i, int] = {}
 var _shape_scores: Dictionary[int, int] = {}
 var _player_by_starting_color: Dictionary[Color, int] = {}
 var _blocked_cells: Array[Vector2i] = []
@@ -44,16 +43,17 @@ func start(starting_colors: Dictionary[int, Color], blocked_cells: Array[Vector2
 	_place_shape()
 
 
-## Each player's score: points from completed shapes plus the cells they currently have painted.
+## Each player's score: points from completed shapes plus the tiles currently in their starting colour,
+## whoever painted them.
 func get_scores() -> Dictionary[int, int]:
 	var scores := _shape_scores.duplicate()
-	for player_id in _player_cells.values():
-		scores[player_id] += 1
+	for color in _player_by_starting_color:
+		scores[_player_by_starting_color[color]] += map.count_cells_with_color(color)
 	return scores
 
 
-func on_cell_painted(cell: Vector2i, player_id: int) -> void:
-	_player_cells[cell] = player_id
+## Scoring goes by the cell's colour, so who painted it (`_player_id`) doesn't matter.
+func on_cell_painted(cell: Vector2i, _player_id: int) -> void:
 	if _shape_cells.is_empty():
 		_place_shape()  # no free spot last time; the board has changed since
 	elif cell in _shape_cells:
