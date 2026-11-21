@@ -1,9 +1,7 @@
 class_name TugBar
 extends Control
-## Tug-of-war bar: one coloured segment per player, unpainted tiles in the middle.
-## The first players fill from the left, the last one from the right.
+## Tug-of-war bar: one coloured segment per player, sized by their share of the total score.
 
-@export var unpainted_color := Color("e8e4d2")
 @export var edge_color := Color("0b0f0e")
 @export var tick_color := Color("1c2423")
 ## How fast the segments slide to new values (higher = snappier).
@@ -12,18 +10,22 @@ extends Control
 var _colors: Array[Color] = []
 var _target: Array[float] = []
 var _shown: Array[float] = []
-var _target_empty := 0.0
-var _shown_empty := 0.0
 
 
-## `colors[i]` and `values[i]` per player, in bar order; `unpainted` = tiles nobody has.
-func set_values(colors: Array[Color], values: Array[float], unpainted: float) -> void:
+## `colors[i]` and `scores[i]` per player, in bar order. Equal shares while nobody has scored.
+func set_values(colors: Array[Color], scores: Array[float]) -> void:
+	assert(colors.size() == scores.size(), "TugBar got %d colours for %d scores" % [colors.size(), scores.size()])
+	var total := 0.0
+	for s in scores:
+		assert(s >= 0.0, "TugBar scores must be non-negative, got %s" % [scores])
+		total += s
+	var shares: Array[float] = []
+	for s in scores:
+		shares.append(s / total if total > 0.0 else 1.0 / scores.size())
 	if colors.size() != _colors.size():
-		_shown = values.duplicate()
-		_shown_empty = unpainted
+		_shown = shares.duplicate()
 	_colors = colors
-	_target = values
-	_target_empty = unpainted
+	_target = shares
 	queue_redraw()
 
 
@@ -33,41 +35,29 @@ func _process(delta: float) -> void:
 	for i in _shown.size():
 		var before := _shown[i]
 		_shown[i] = lerpf(_shown[i], _target[i], k)
-		moving = moving or absf(before - _shown[i]) > 0.001
-	var before_empty := _shown_empty
-	_shown_empty = lerpf(_shown_empty, _target_empty, k)
-	if moving or absf(before_empty - _shown_empty) > 0.001:
+		moving = moving or absf(before - _shown[i]) > 0.0001
+	if moving:
 		queue_redraw()
 
 
 func _draw() -> void:
 	var w := size.x
 	var h := size.y
-	var total := _shown_empty
-	for v in _shown:
-		total += v
 	# drop shadow and bottom edge
 	draw_rect(Rect2(0, h, w, 4), Color(0, 0, 0, 0.25))
-	if total <= 0.0:
-		_segment(0.0, w, unpainted_color, 0.1)
-	else:
-		var n := _colors.size()
-		var x := 0.0
-		for i in maxi(n - 1, 0):
-			var sw := w * _shown[i] / total
-			_segment(x, sw, _colors[i], 0.25)
-			x += sw
-		var right := w * _shown[n - 1] / total if n > 0 else 0.0
-		_segment(x, w - x - right, unpainted_color, 0.1)
-		if n > 0:
-			_segment(w - right, right, _colors[n - 1], 0.25)
+	var x := 0.0
+	for i in _colors.size():
+		# the last segment takes whatever is left, so rounding never leaves a gap
+		var sw := w - x if i == _colors.size() - 1 else w * _shown[i]
+		_segment(x, sw, _colors[i])
+		x += sw
 	draw_rect(Rect2(0, h - 3, w, 3), edge_color)
 	# centre mark
 	draw_rect(Rect2(w * 0.5 - 1.5, 0, 3, h + 14), tick_color)
 
 
-func _segment(x: float, width: float, color: Color, shade: float) -> void:
+func _segment(x: float, width: float, color: Color) -> void:
 	if width <= 0.0:
 		return
 	draw_rect(Rect2(x, 0, width, size.y), color)
-	draw_rect(Rect2(x, size.y - 8, width, 5), Color(0, 0, 0, shade))
+	draw_rect(Rect2(x, size.y - 8, width, 5), Color(0, 0, 0, 0.25))

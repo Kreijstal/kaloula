@@ -16,19 +16,20 @@ then call it from game code:
 # register / refresh a player: the mini frog follows frog.rig, the can takes frog.color
 hud.update_frog(player_id, frog, paint_left)        # paint_left: -1 = leave as is
 
-# tiles currently in each player's colour; total = paintable tiles (pools excluded)
-hud.update_points([[0, 19], [1, 8]], total_tiles)
-
-# points shown on each player's card (the bar keeps showing tiles)
+# each player's points: shown on their card, and their share of the total sizes the bar
 hud.update_scores({0: 27, 1: 8})
+
+# tiles currently in each player's colour; total = paintable tiles (pools excluded);
+# drives the "tiles still unpainted" text
+hud.update_points([[0, 19], [1, 8]], total_tiles)
 
 hud.set_timer(seconds_left)                         # red + pulse in the last 10 s, "TIME!" at 0
 hud.set_player_name(player_id, "Lily")              # optional, default "Player 1", "Player 2"
 ```
 
 - Players appear in the order they're first mentioned. The first is docked bottom-left, the last
-  bottom-right (mirrored), any others in between; on the bar the first ones fill from the left
-  and the last one from the right, unpainted tiles in the middle.
+  bottom-right (mirrored), any others in between. The bar splits by share of the total score
+  in the same order, evenly while nobody has scored.
 - The mini frog's animation updates by itself every frame; call `update_frog` again only when
   the paint left changes. The can's paint follows the frog's current colour (e.g. after a stomp).
 - Calling `update_points` / `set_timer` every frame is fine; the bar and paint level ease to

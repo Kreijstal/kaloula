@@ -1,10 +1,11 @@
 class_name HUD
 extends CanvasLayer
 ## Match HUD: tug-of-war bar along the top, round timer, and a dock along the bottom
-## with one paint can per player (mini frog copying the real frog, paint level, tiles).
+## with one paint can per player (mini frog copying the real frog, paint level, score).
 ##
 ## Instance hud.tscn anywhere in the game scene, then call:
 ##     hud.update_frog(player_id, frog, paint_left)   # register / refresh a player
+##     hud.update_scores({player_id: points, ...})
 ##     hud.update_points([[player_id, tiles], ...], total_tiles)
 ##     hud.set_timer(seconds_left)
 
@@ -72,7 +73,7 @@ var _started := false
 
 ## Tiles currently in each player's colour: `points` = [[player_id, tiles], ...]
 ## (arrays or any 2-item list). `total_tiles` = tiles that can be painted (pools
-## excluded); leave -1 to keep the last value. The grey middle of the bar = the rest.
+## excluded); leave -1 to keep the last value. Drives the "tiles still unpainted" text.
 func update_points(points: Array, total_tiles: int = -1) -> void:
 	if total_tiles >= 0:
 		_total_tiles = total_tiles
@@ -83,13 +84,13 @@ func update_points(points: Array, total_tiles: int = -1) -> void:
 	_refresh_bar()
 
 
-## Score shown on each player's card: `scores` = {player_id: points}. The bar shows tiles
-## (update_points), the cards show this.
+## Each player's score, `scores` = {player_id: points}: shown on their card and sizes their part of the bar.
 func update_scores(scores: Dictionary) -> void:
 	for player_id in scores:
 		_ensure_player(player_id)
 		_scores[player_id] = int(scores[player_id])
 		_cards[player_id].set_score(_scores[player_id])
+	_refresh_bar()
 
 
 ## Register or refresh a player's card. `frog`: the player's Frog (or a FrogRig):
@@ -165,20 +166,23 @@ func _rebuild_dock() -> void:
 
 func _refresh_bar() -> void:
 	var colors: Array[Color] = []
-	var values: Array[float] = []
+	var scores: Array[float] = []
 	var painted := 0
+	var total_score := 0
 	for player_id in _order:
 		colors.append(_colors.get(player_id, Color.GRAY))
-		values.append(float(_tiles.get(player_id, 0)))
+		scores.append(float(_scores.get(player_id, 0)))
 		painted += _tiles.get(player_id, 0)
-	var total := maxi(_total_tiles, painted)
-	var unpainted := total - painted
-	_bar.set_values(colors, values, float(unpainted))
-	_unpainted_label.text = "%d tiles still unpainted" % unpainted if total > 0 else ""
+		total_score += _scores.get(player_id, 0)
+	_bar.set_values(colors, scores)
+	var total_tiles := maxi(_total_tiles, painted)
+	_unpainted_label.text = "%d tiles still unpainted" % (total_tiles - painted) if total_tiles > 0 else ""
+	var share := func(player_id: int) -> int:
+		return roundi(100.0 * _scores.get(player_id, 0) / total_score) if total_score > 0 else roundi(100.0 / _order.size())
 	var first: int = _order[0] if _order.size() > 0 else -1
 	var last: int = _order[_order.size() - 1] if _order.size() > 1 else -1
-	_left_pct.text = "%s %d%%" % [_names[first].to_upper(), roundi(100.0 * _tiles[first] / total)] if first >= 0 and total > 0 else ""
-	_right_pct.text = "%d%% %s" % [roundi(100.0 * _tiles[last] / total), _names[last].to_upper()] if last >= 0 and total > 0 else ""
+	_left_pct.text = "%s %d%%" % [_names[first].to_upper(), share.call(first)] if first >= 0 else ""
+	_right_pct.text = "%d%% %s" % [share.call(last), _names[last].to_upper()] if last >= 0 else ""
 
 
 func _build() -> void:
