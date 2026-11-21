@@ -7,6 +7,8 @@ extends Node2D
 ## rotate the node to point it somewhere else. Colours live in a FrogPalette.
 
 signal cycle_finished(animation: Anim)
+## Emitted when a crawl_over() distance has been covered.
+signal crawl_finished
 ## Emitted when a turn started with turn() is done (the node has been rotated).
 signal turn_finished(degrees: float)
 
@@ -35,6 +37,11 @@ enum Anim { HOP, CRAWL, BELLY_UP, IDLE, TURN, STRETCH, CATCH }
 ## Seconds a straight hop of two tiles (2 × HOP_STRIDE rig units) takes. Other hops scale
 ## with their length: one tile takes half this, a one-tile diagonal about 0.71 of it.
 @export_range(0.1, 6.0, 0.01) var jump_duration := 2.0 * HOP_DURATION
+## Distance per crawl cycle (rig units). crawl_over() sets it; reset when the animation changes.
+var crawl_stride := CRAWL_STRIDE
+var _crawl_rate := 1.0
+var _crawl_target := -1.0  # rig units; crawl_over() emits crawl_finished there
+
 ## Seconds to blend the legs when switching between hop, crawl, idle and turn.
 @export_range(0.0, 0.5, 0.01) var blend_time := 0.15
 ## Keep the frog's body centred on the node (planted feet slide back like on a
@@ -114,6 +121,20 @@ func turn(degrees: float, then: Anim = Anim.IDLE) -> void:
 		_restart(from)
 	_turn_once = true
 	_turn_then = then if then != Anim.TURN else Anim.IDLE
+
+
+## Crawl forward `distance` rig units in `seconds`, in as few steps as the legs
+## allow (CRAWL_MAX_STRIDE each). Move the frog by get_travel() meanwhile; it reaches
+## `distance` after `seconds` and crawl_finished is emitted. Then switch the
+## animation yourself (e.g. idle).
+func crawl_over(distance: float, seconds: float) -> void:
+	var steps := maxi(1, ceili(distance / CRAWL_MAX_STRIDE))
+	animation = Anim.CRAWL
+	if time > 0.0:
+		_restart(_display_pose() if is_inside_tree() else {})
+	crawl_stride = distance / steps
+	_crawl_rate = steps * CRAWL_DURATION / maxf(seconds, 0.01)
+	_crawl_target = distance
 
 
 ## Play one loop of `anim`, then switch to `then`. HOP, STRETCH and CATCH start and end
@@ -215,6 +236,9 @@ func _reset_steps() -> void:
 
 
 func _restart(from: Dictionary) -> void:
+	crawl_stride = CRAWL_STRIDE
+	_crawl_rate = 1.0
+	_crawl_target = -1.0
 	_reset_steps()
 	_still = 0.0
 	time = 0.0
@@ -247,7 +271,15 @@ func _process(delta: float) -> void:
 		return
 	var step := delta * speed_scale
 	# HOP is authored to last HOP_DURATION; play it at the rate that makes it last hop_duration().
-	time += step * (HOP_DURATION / hop_duration() if animation == Anim.HOP else 1.0)
+	var rate := 1.0
+	if animation == Anim.HOP:
+		rate = HOP_DURATION / hop_duration()
+	elif animation == Anim.CRAWL:
+		rate = _crawl_rate
+	time += step * rate
+	if animation == Anim.CRAWL and _crawl_target > 0.0 and get_travel() >= _crawl_target:
+		_crawl_target = -1.0
+		crawl_finished.emit()
 	_blend_left = maxf(0.0, _blend_left - step)
 	if animation == Anim.IDLE and not feet_settled():
 		_update_steps(step)
@@ -312,7 +344,7 @@ func get_travel(at_time: float = NAN) -> float:
 			var progress: float = _hop_body.at(tick)[0]
 			return cycle * hop_stride + progress + _hop_extra_travel(progress, tick, hop_stride)
 		Anim.CRAWL:
-			return at_time / CRAWL_DURATION * CRAWL_STRIDE
+			return at_time / CRAWL_DURATION * crawl_stride
 	return 0.0
 
 
@@ -322,7 +354,7 @@ func sample(at_time: float = NAN) -> Dictionary:
 		at_time = time
 	match animation:
 		Anim.HOP: return sample_hop(at_time, hop_stride)
-		Anim.CRAWL: return sample_crawl(at_time)
+		Anim.CRAWL: return sample_crawl(at_time, crawl_stride)
 		Anim.IDLE, Anim.STRETCH, Anim.CATCH:
 			if animation == Anim.IDLE and not feet_settled():
 				var arcs := PackedFloat64Array()
@@ -954,6 +986,8 @@ static func sample_hop(seconds: float, stride: float = HOP_STRIDE) -> Dictionary
 
 const CRAWL_DURATION := 1.60
 const CRAWL_STRIDE := 36.0
+## Longest crawl step crawl_over() uses (legs stay within reach up to ~75).
+const CRAWL_MAX_STRIDE := 75.0
 const CRAWL_SWING := 0.235
 # four-beat walk: each toe fan touches down before the next foot lifts
 const CRAWL_FEET := [
@@ -964,11 +998,12 @@ const CRAWL_FEET := [
 ]
 
 
-static func sample_crawl(seconds: float) -> Dictionary:
+## `stride`: distance per crawl cycle in rig units (36 = the original crawl).
+static func sample_crawl(seconds: float, stride: float = CRAWL_STRIDE) -> Dictionary:
 	var cycles := seconds / CRAWL_DURATION
 	var phase := cycles - floorf(cycles)
 	var angle := phase * TAU
-	var ground_y := -cycles * CRAWL_STRIDE
+	var ground_y := -cycles * stride
 	var body := Vector2(1.8 * cos(angle), ground_y + .58 * sin(2.0 * angle))
 	var yaw := .065 * sin(angle - .3)
 	var cs := cos(yaw)
@@ -986,10 +1021,10 @@ static func sample_crawl(seconds: float) -> Dictionary:
 		var u := minf(1.0, foot_phase / CRAWL_SWING)
 		var reach := u * u * u * (10.0 + u * (-15.0 + 6.0 * u))
 		var arc := 0.0 if u == 1.0 else pow(sin(PI * u), 2.0)
-		var stance_len := CRAWL_STRIDE * (1.0 - CRAWL_SWING)
+		var stance_len := stride * (1.0 - CRAWL_SWING)
 		var back_y := (36.0 if hind else -25.0) + stance_len / 2.0
 		var foot := Vector2(mirror * ((-43.0 if hind else -41.0) + (5.0 if hind else -3.0) * arc),
-				back_y - (step + start + reach) * CRAWL_STRIDE)
+				back_y - (step + start + reach) * stride)
 		var heading := ((192.0 if hind else 222.0) + (-21.0 if hind else 12.0) * arc) * RAD
 		var foot_len := 16.0 if hind else 10.0
 		var wrist := Vector2(foot.x - mirror * foot_len * cos(heading), foot.y - foot_len * sin(heading))

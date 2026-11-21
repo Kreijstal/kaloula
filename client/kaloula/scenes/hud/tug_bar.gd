@@ -1,3 +1,4 @@
+@tool
 class_name TugBar
 extends Control
 ## Tug-of-war bar: one coloured segment per player, sized by their share of the total score.
@@ -6,6 +7,8 @@ extends Control
 @export var tick_color := Color("1c2423")
 ## How fast the segments slide to new values (higher = snappier).
 @export var smoothing := 8.0
+## Colours drawn (in equal parts) until the HUD sets real values, e.g. in the editor.
+@export var preview_colors: Array[Color] = [Color("2f4cf5"), Color("d6332b")]
 
 var _colors: Array[Color] = []
 var _target: Array[float] = []
@@ -45,11 +48,18 @@ func _draw() -> void:
 	var h := size.y
 	# drop shadow and bottom edge
 	draw_rect(Rect2(0, h, w, 4), Color(0, 0, 0, 0.25))
+	var colors := _colors
+	var shown := _shown
+	if colors.is_empty():
+		colors = preview_colors
+		shown = []
+		for c in colors:
+			shown.append(1.0 / colors.size())
 	var x := 0.0
-	for i in _colors.size():
+	for i in colors.size():
 		# the last segment takes whatever is left, so rounding never leaves a gap
-		var sw := w - x if i == _colors.size() - 1 else w * _shown[i]
-		_segment(x, sw, _colors[i])
+		var sw := w - x if i == colors.size() - 1 else w * shown[i]
+		_segment(x, sw, colors[i])
 		x += sw
 	draw_rect(Rect2(0, h - 3, w, 3), edge_color)
 	# centre mark

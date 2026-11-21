@@ -1,6 +1,19 @@
 extends TileMapLayer
 class_name Map
 
+## How saturated painted tiles look, relative to the paint (frog) colour: 1 = the same,
+## lower = paler, so the frogs stand out on their own colour. Only the look changes;
+## the stored paint colours (used for scoring) stay exact.
+@export_range(0.0, 1.0) var tile_saturation := 0.55:
+	set(v):
+		tile_saturation = v
+		notify_runtime_tile_data_update()
+## Mixes painted tiles a little toward white (0 = not at all).
+@export_range(0.0, 1.0) var tile_lighten := 0.12:
+	set(v):
+		tile_lighten = v
+		notify_runtime_tile_data_update()
+
 var _paint: Dictionary[Vector2i, Color] = {}
 
 # Called when the node enters the scene tree for the first time.
@@ -34,4 +47,10 @@ func _use_tile_data_runtime_update(coords: Vector2i) -> bool:
 
 
 func _tile_data_runtime_update(coords: Vector2i, tile_data: TileData) -> void:
-	tile_data.modulate = _paint[coords]
+	tile_data.modulate = tile_color(_paint[coords])
+
+
+## The colour a tile painted `paint` is drawn in (paler than the paint itself).
+func tile_color(paint: Color) -> Color:
+	var c := Color.from_hsv(paint.h, paint.s * tile_saturation, paint.v, paint.a)
+	return c.lerp(Color.WHITE, tile_lighten)

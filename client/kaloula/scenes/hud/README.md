@@ -27,24 +27,34 @@ hud.set_timer(seconds_left)                         # red + pulse in the last 10
 hud.set_player_name(player_id, "Lily")              # optional, default "Player 1", "Player 2"
 ```
 
-- Players appear in the order they're first mentioned. The first is docked bottom-left, the last
-  bottom-right (mirrored), any others in between. The bar splits by share of the total score
+- Players take the player cards in `DockRow` in the order they're first mentioned: the first gets
+  `Player1` (bottom-left), the second `Player2` (bottom-right, mirrored). Unused cards are hidden;
+  extra players get a card added before the right-hand one. The bar splits by share of the total score
   in the same order, evenly while nobody has scored.
 - The mini frog's animation updates by itself every frame; call `update_frog` again only when
   the paint left changes. The can's paint follows the frog's current colour (e.g. after a stomp).
 - Calling `update_points` / `set_timer` every frame is fine; the bar and paint level ease to
   new values.
-- `paint_max` (3) is how much paint fills a can; more than that shows "lots of paint".
-- `controls_hint` is the key help shown in the middle of the dock; edit it in the inspector.
+- `paint_max` is how much paint fills a can (the game sets it to `GameLogic.paint_budget`);
+  more than that shows "lots of paint".
+
+## Editing the look
+
+Everything you see is a node in `hud.tscn`: open it and move, resize, restyle or retext things
+in the editor (the bar, cans and cards draw a preview there). The script finds these nodes by
+unique name, so keep `%Bar`, `%TimerPanel`, `%TimerLabel`, `%LeftPct`, `%RightPct`,
+`%Unpainted` and `%DockRow`; anything else (e.g. `Controls`, the key help) is free to change.
+The timer's normal and warning panels are `timer_style` / `timer_warn_style` on the HUD node.
+A player's card is `player_card.tscn` (`mirrored` flips it); edit it once for both players.
 
 ## Files
 
 | File | What |
 |---|---|
-| `hud.gd`, `hud.tscn` | the HUD and its API |
+| `hud.gd`, `hud.tscn` | the HUD layout and its API |
 | `tug_bar.gd` | the bar (`TugBar`) |
 | `paint_can.gd` | a can with its paint level and mini frog (`PaintCan`) |
-| `player_card.gd` | can + name + points + paint left (`PlayerCard`) |
+| `player_card.gd`, `player_card.tscn` | can + name + points + paint left (`PlayerCard`) |
 | `pixel_style_box.gd` | the chunky pixel panel style (`PixelStyleBox`) |
 
 Font: Pixelify Sans (`assets/fonts/`, SIL Open Font License, see `PixelifySans-OFL.txt`).

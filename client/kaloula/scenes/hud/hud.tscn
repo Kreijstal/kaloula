@@ -1,6 +1,197 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scenes/hud/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://scenes/hud/hud.gd" id="1_mq0y1"]
+[ext_resource type="Script" path="res://scenes/hud/pixel_style_box.gd" id="2_go0ap"]
+[ext_resource type="PackedScene" path="res://scenes/hud/player_card.tscn" id="3_nhd55"]
+[ext_resource type="Script" path="res://scenes/hud/player_card.gd" id="4_q6mn5"]
+[ext_resource type="FontFile" path="res://assets/fonts/pixelify-sans-latin-400-normal.woff2" id="5_8nkf1"]
+[ext_resource type="Script" path="res://scenes/hud/tug_bar.gd" id="6_558d4"]
+[ext_resource type="FontFile" path="res://assets/fonts/pixelify-sans-latin-600-normal.woff2" id="7_4m1a1"]
+[ext_resource type="FontFile" path="res://assets/fonts/pixelify-sans-latin-700-normal.woff2" id="8_iioc1"]
 
-[node name="HUD" type="CanvasLayer"]
-script = ExtResource("1_hud")
+[sub_resource type="StyleBox" id="StyleBox_567j1"]
+resource_local_to_scene = false
+resource_name = ""
+content_margin_left = 18.0
+content_margin_top = 6.0
+content_margin_right = 18.0
+content_margin_bottom = 6.0
+script = ExtResource("2_go0ap")
+
+[sub_resource type="StyleBox" id="StyleBox_nsgyl"]
+resource_local_to_scene = false
+resource_name = ""
+content_margin_left = 18.0
+content_margin_top = 6.0
+content_margin_right = 18.0
+content_margin_bottom = 6.0
+script = ExtResource("2_go0ap")
+fill = Color(0.47843137, 0.12156863, 0.12156863, 1)
+inner = Color(0.6392157, 0.21176471, 0.21176471, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jjjd2"]
+bg_color = Color(0.10980392, 0.14117648, 0.13725491, 1)
+border_width_top = 6
+border_color = Color(0.043137256, 0.05882353, 0.05490196, 1)
+
+[node name="HUD" type="CanvasLayer" unique_id=1588636216]
+layer = 10
+script = ExtResource("1_mq0y1")
+timer_style = SubResource("StyleBox_567j1")
+timer_warn_style = SubResource("StyleBox_nsgyl")
+
+[node name="Root" type="Control" parent="." unique_id=1068031967]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Dock" type="Panel" parent="Root" unique_id=1912353767]
+layout_mode = 0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -140.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_jjjd2")
+
+[node name="DockLine" type="ColorRect" parent="Root" unique_id=196443439]
+layout_mode = 0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -137.0
+offset_bottom = -134.0
+mouse_filter = 2
+color = Color(0.17254902, 0.22352941, 0.21568628, 1)
+
+[node name="DockRow" type="HBoxContainer" parent="Root" unique_id=2011914681]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -164.0
+offset_right = -24.0
+offset_bottom = -14.0
+mouse_filter = 2
+
+[node name="Player1" type="HBoxContainer" parent="Root/DockRow" unique_id=353662904 instance=ExtResource("3_nhd55")]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+script = ExtResource("4_q6mn5")
+
+[node name="Spacer" type="Control" parent="Root/DockRow" unique_id=362669457]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="Player2" type="HBoxContainer" parent="Root/DockRow" unique_id=879354090 instance=ExtResource("3_nhd55")]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+script = ExtResource("4_q6mn5")
+mirrored = true
+
+[node name="Unpainted" type="Label" parent="Root" unique_id=2090858785]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -72.0
+offset_right = 240.0
+offset_bottom = -50.0
+theme_override_fonts/font = ExtResource("5_8nkf1")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.7882353, 0.76862746, 0.6784314, 1)
+text = "88 tiles still unpainted"
+horizontal_alignment = 1
+
+[node name="Controls" type="Label" parent="Root" unique_id=485099524]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -330.0
+offset_top = -124.0
+offset_right = 330.0
+offset_bottom = -78.0
+theme_override_fonts/font = ExtResource("5_8nkf1")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.7882353, 0.76862746, 0.6784314, 1)
+text = "Player 1: Use W/A/S/D to change direction and jump distance, Space to jump
+Player 2: Use the arrow keys to change direction and jump distance, Enter to jump"
+horizontal_alignment = 1
+
+[node name="Bar" type="Control" parent="Root" unique_id=1396812411]
+unique_name_in_owner = true
+anchors_preset = 0
+anchor_right = 1.0
+offset_bottom = 26.0
+mouse_filter = 2
+script = ExtResource("6_558d4")
+
+[node name="LeftPct" type="Label" parent="Root" unique_id=1785827629]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 12.0
+offset_top = 34.0
+offset_right = 12.0
+offset_bottom = 34.0
+theme_override_fonts/font = ExtResource("7_4m1a1")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.9529412, 0.9372549, 0.8509804, 1)
+theme_override_colors/font_shadow_color = Color(0.043137256, 0.05882353, 0.05490196, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "PLAYER 1 50%"
+
+[node name="RightPct" type="Label" parent="Root" unique_id=71342874]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -300.0
+offset_top = 34.0
+offset_right = -12.0
+offset_bottom = 23.0
+theme_override_fonts/font = ExtResource("7_4m1a1")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.9529412, 0.9372549, 0.8509804, 1)
+theme_override_colors/font_shadow_color = Color(0.043137256, 0.05882353, 0.05490196, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "50% PLAYER 2"
+horizontal_alignment = 2
+
+[node name="TimerRow" type="CenterContainer" parent="Root" unique_id=1380390137]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 34.0
+offset_right = 120.0
+offset_bottom = 84.0
+mouse_filter = 2
+
+[node name="TimerPanel" type="PanelContainer" parent="Root/TimerRow" unique_id=1817595340]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBox_567j1")
+
+[node name="TimerLabel" type="Label" parent="Root/TimerRow/TimerPanel" unique_id=183523962]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("8_iioc1")
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.9529412, 0.9372549, 0.8509804, 1)
+text = "1:30"
+horizontal_alignment = 1

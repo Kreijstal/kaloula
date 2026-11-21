@@ -10,7 +10,7 @@ signal stomped(victim_id: int, by_id: int)
 
 @export var map: Map
 @export var frogs: Dictionary[int, Frog] = {}
-@export var paint_budget: int = 10000
+@export var paint_budget: int = 20
 ## Each player's paint pool cell; the pool takes that frog's starting colour.
 @export var pool_cells: Dictionary[int, Vector2i] = {}
 @export var pool_scene: PackedScene
@@ -68,7 +68,7 @@ func _on_frog_jumped(cell: Vector2i, player_id: int) -> void:
 	for other_id in get_players_on(cell):
 		if other_id != player_id:
 			frogs[other_id].color = frogs[player_id].color
-			_set_paint(other_id, 10_000)
+			_set_paint(other_id, paint_budget)
 			stomped.emit(other_id, player_id)
 	var pool: PaintPool = _pool_cells.get(cell)
 	if pool != null:
